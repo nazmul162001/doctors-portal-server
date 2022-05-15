@@ -73,16 +73,30 @@ async function run(){
     res.send({result, token});
     })
 
+    // api for Access all user only for admin
+    app.get('/admin/:email',async(req, res)=> {
+      const email = req.params.email;
+      const user = await userCollection.findOne({email: email});
+      const isAdmin = user.role === 'admin';
+      res.send({admin: isAdmin})
+    })
+
     // put api for admin users
     app.put('/user/admin/:email', verifyJWT,  async(req, res)=> {
       const email = req.params.email;
-      
-      const filter = {email: email}
-      const updateDoc = {
-        $set: {role: 'admin'},
-      };
-    const result = await userCollection.updateOne(filter, updateDoc);
-    res.send(result);
+      const requester = req.decoded.email;
+      const requesterAccount = await userCollection.findOne({email: requester});
+      if(requesterAccount.role === 'admin'){
+        const filter = {email: email}
+        const updateDoc = {
+          $set: {role: 'admin'},
+        };
+      const result = await userCollection.updateOne(filter, updateDoc);
+      res.send(result);
+      }
+      else{
+        res.status(403).send({message: 'forbidden'});
+      }
     })
 
     // api for available slots
