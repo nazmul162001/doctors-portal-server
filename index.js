@@ -16,6 +16,26 @@ app.use(express.json());
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.urspw.mongodb.net/myFirstDatabase?retryWrites=true&w=majority`;
 // client connection
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
+
+// verify jwt
+function verifyJWT(req, res, next){
+  const authHeader = req.headers.authorization;
+  if(!authHeader){
+    return res.status(401).send({message: 'UnAuthorized access'});
+  }
+  // verify token
+  const token = authHeader.split(' ')[1];
+  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, function(err, decoded){
+    if(err){
+      return res.status(403).send({message: 'Forbidden access'})
+    }
+    req.decoded = decoded;
+    next();
+  })
+}
+
+
+
 // async await function
 async function run(){
   try{
@@ -78,13 +98,17 @@ async function run(){
     })
 
     // get booking data for dashboard
-    app.get('/booking', async(req, res)=> {
+    app.get('/booking', verifyJWT, async(req, res)=> {
       const patient = req.query.patient;
-      // const authorization = req.headers.authorization;
-      // console.log('authHeader', authorization);
-      const query = {patient: patient};
-      const bookings = await bookingCollection.find(query).toArray();
-      res.send(bookings);
+      const decodedEmail = req.decoded.email;
+      if(patient === decodedEmail){
+        const query = {patient: patient};
+        const bookings = await bookingCollection.find(query).toArray();
+        return res.send(bookings);
+      }
+      else{
+        return res.status(403).send({message: 'forbidden access'})
+      }
     })
 
     // api for create new booking
