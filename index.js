@@ -53,7 +53,7 @@ async function run(){
     })
 
     // api for all users
-    app.get('/user', async(req,res)=>{
+    app.get('/user', verifyJWT , async(req,res)=>{
       const users = await userCollection.find().toArray();
       res.send(users);
     })
@@ -73,6 +73,19 @@ async function run(){
     res.send({result, token});
     })
 
+    // put api for admin users
+    app.put('/user/admin/:email', verifyJWT,  async(req, res)=> {
+      const email = req.params.email;
+      
+      const filter = {email: email}
+      const updateDoc = {
+        $set: {role: 'admin'},
+      };
+    const result = await userCollection.updateOne(filter, updateDoc);
+    res.send(result);
+    })
+
+    // api for available slots
     app.get('/available', async(req,res)=> {
       const date = req.query.date;
       console.log(date);
