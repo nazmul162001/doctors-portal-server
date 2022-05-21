@@ -10,7 +10,6 @@ const port = process.env.PORT || 5000;
 
 // Middleware
 app.use(cors());
-// app.use(cors({origin: true}));
 app.use(express.json());
 
 // URI
@@ -189,7 +188,7 @@ async function run() {
       };
       const result = await paymentCollection.insertOne(payment);
       const updatedBooking = await bookingCollection.updateOne(filter, updatedDoc);
-      res.send(updatedDoc);
+      res.send(updatedBooking);
     })
 
 
