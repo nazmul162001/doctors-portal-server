@@ -50,6 +50,7 @@ async function run() {
       .collection('bookings');
     const userCollection = client.db('doctors_portal').collection('users');
     const doctorCollection = client.db('doctors_portal').collection('doctors');
+    const paymentCollection = client.db('doctors_portal').collection('payments');
 
     // verify admin for added doctor
     const verifyAdmin = async (req, res, next) => {
@@ -174,6 +175,21 @@ async function run() {
         return res.status(403).send({ message: 'forbidden access' });
       }
     });
+
+    app.patch('/booking/:id', verifyJWT, async(req,res)=> {
+      const id = req.params.id;
+      const payment = req.body;
+      const filter = {_id: ObjectId(id)};
+      const updatedDoc = {
+        $set: {
+          paid: true,
+          paymentId: payment.transactionId,
+        }
+      };
+      const result = await paymentCollection.insertOne(payment);
+      const updatedBooking = await bookingCollection.updateOne(filter, updatedDoc);
+      res.send(updatedDoc);
+    })
 
 
     app.get('/booking/:id', verifyJWT, async(req, res)=>{
